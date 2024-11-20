@@ -1,0 +1,488 @@
+#Chip 16f18875
+//lcd 
+#Define LCD_RS PortD.0
+#Define LCD_RW PortD.1
+#Define LCD_ENABLE PortD.2
+#Define LCD_DB4 PortD.4
+#Define LCD_DB5 PortD.5
+#Define LCD_DB6 PortD.6
+#Define LCD_DB7 PortD.7
+
+//motors 
+#DEFINE MotorL2 PortB.0
+#DEFINE MotorL PortB.1
+#DEFINE MotorR PortB.2
+#DEFINE MotorR2 PortB.3
+
+//Wall detection/fire/photo/fan
+#DEFINE FIRE PORTA.2
+#DEFINE photo PORTA.3
+#DEFINE FAN PORTA.5
+
+//pin in/out
+Dir MotorL Out
+Dir MotorL2 Out
+Dir MotorR Out
+Dir MotorR2 Out
+Dir FAN Out
+Dir PortA.0 in
+Dir PortA.1 in
+Dir photo IN
+Dir FIRE in
+
+//defineing varaibls
+Dim DigitalWallFront as Byte
+Dim DigitalWallLeft as Byte
+Dim numOfline as Byte
+Dim fireSen as Byte
+Dim lineCount as Byte 
+Dim rightTurns as Byte 
+
+//setup variable initial values
+lineCount = 0
+rightTurns = 0
+
+Do
+  //read analog data from flame and wall detection
+  DigitalFlame = ReadAD(AN2)
+  DigitalWallFront = ((((6787/(ReadAD(AN0)-3)))-4)/5) 
+  DigitalWallLeft = ((((6787/(ReadAD(AN1)-3)))-4)/5)  
+  lineDetValue = ReadAD(AN3)
+
+  //print for troubleshoot
+  CLS
+  Locate 0,0
+  print "right"
+  print rightTurns
+
+  //flame detection
+  If DigitalFlame<6 Then
+      FAN = 1
+      gosub Extinguish
+  Else
+      FAN = 0
+      gosub Wallhug
+    End If
+Loop
+
+
+Sub Wallhug
+if rightTurns = 0 then 
+  gosub LeftTurn90
+  rightTurns = 1
+  end if 
+
+
+//count the number of right turns and once it reach 14, start a procedure
+  if rightTurns =2 Then 
+    motorL = true 
+    MotorR = true 
+    wait 200 ms 
+  // go striaght 2.6 sec
+    gosub Straight
+    wait 1300 ms //30 cm 
+    //turn right
+    gosub RightTurn90
+
+    //go straight for 1.3 seconds
+    gosub Straight
+    wait 800 ms 
+
+
+
+    //reset rightTurns
+    rightTurns = 3
+  end If 
+
+
+
+  if rightTurns = 5 then
+  //go straight for 2.5 seconds
+
+       MotorL = true 
+    MotorL2 = false 
+    MotorR = true 
+    MotorR2 = false 
+  wait 1450 ms 
+
+
+    MotorL = true 
+    MotorL2 = false 
+    MotorR = false  
+    MotorR2 = true 
+
+    wait 100 ms 
+
+  gosub RightTurn90
+  rightTurns = 7
+
+  end if 
+
+
+//room 3 
+
+  if rightTurns = 8 then 
+
+   motorL = true 
+    MotorR = true 
+    wait 200 ms 
+  // go striaght 2.6 sec
+    gosub Straight
+    wait 1650 ms //30 cm 
+    //turn right
+    gosub RightTurn90
+
+        //go straight for 1.3 seconds
+           MotorL = true 
+    MotorL2 = false 
+    MotorR = true 
+    MotorR2 = false 
+  wait 450 ms 
+
+  rightTurns = 9
+
+end if 
+
+if rightTurns = 11 then 
+
+       MotorL = true 
+    MotorL2 = false 
+    MotorR = true 
+    MotorR2 = false 
+  wait 1872 ms 
+
+
+
+
+  gosub RightTurn90
+
+  rightTurns = 12
+end if 
+
+
+//after it get out of room 2
+
+if rightTurns = 13 then 
+
+       MotorL = true 
+    MotorL2 = false 
+    MotorR = true 
+    MotorR2 = false 
+  wait 1100 ms 
+
+  gosub LeftTurn90
+
+
+    MotorL = true 
+    MotorL2 = false 
+    MotorR = true 
+    MotorR2 = false 
+  wait 900 ms 
+
+
+
+  gosub LeftTurn90
+  
+     //turn right for a bit
+    MotorL = true
+    MotorL2 = false
+    MotorR = false
+    MotorR2 = true
+    wait 100 ms
+    gosub stop
+    wait 1000 ms 
+
+       if DigitalFlame < 38 then 
+    MotorL = true
+    MotorL2 = false
+    MotorR = true 
+    MotorR2 = false 
+
+    wait 200 ms 
+    fan = 1
+      gosub extinguish
+    end if 
+
+         //turn left for a bit
+    MotorL = false 
+    MotorL2 = true
+    MotorR = true 
+    MotorR2 = false 
+    wait 200 ms
+    gosub stop
+    wait 1000 ms 
+
+
+    if DigitalFlame < 38 then 
+    MotorL = true
+    MotorL2 = false
+    MotorR = true 
+    MotorR2 = false 
+
+    wait 200 ms 
+    fan = 1
+      gosub extinguish
+    end if 
+
+         //turn right for a bit
+    MotorL = true
+    MotorL2 = false
+    MotorR = false
+    MotorR2 = true
+    wait 100 ms
+    gosub stop
+    wait 1000 ms 
+
+
+    gosub RightTurn90
+//go striaght for one second 
+    MotorL = true 
+    MotorL2 = false 
+    MotorR = true 
+    MotorR2 = false 
+
+    wait 1605 ms 
+
+    gosub LeftTurn90
+    MotorL = true 
+    MotorL2 = false 
+    MotorR = true 
+    MotorR2 = false 
+    wait 300 ms 
+
+
+    gosub extinguish
+      MotorL = false 
+    MotorL2 = true  
+    MotorR = true 
+    MotorR2 = false 
+     
+     wait 100 ms 
+
+
+
+    //check fire 
+
+    
+     //turn right for a bit
+    MotorL = true
+    MotorL2 = false
+    MotorR = false
+    MotorR2 = true
+    wait 100 ms
+    
+    gosub stop 
+
+    wait 1000 ms 
+
+    if DigitalFlame < 38 then 
+    MotorL = true
+    MotorL2 = false
+    MotorR = true 
+    MotorR2 = false 
+
+    wait 200 ms 
+    fan = 1
+      gosub extinguish
+    end if 
+
+         //turn left for a bit
+    MotorL = false 
+    MotorL2 = true
+    MotorR = true 
+    MotorR2 = false 
+    wait 200 ms
+
+    gosub stop 
+
+    wait 1000 ms 
+
+
+    if DigitalFlame < 38 then 
+
+    gosub stop 
+    fan = 1 
+      gosub extinguish
+
+    end if 
+
+    if DigitalWallFront<26 then 
+
+    gosub stop 
+
+    end if  
+
+
+  end if 
+
+
+
+
+   
+  if DigitalWallFront>16 Then 
+      //for u turn and left turn
+      if DigitalWallLeft > 17 then 
+        gosub SlightLeft 
+        wait 20 ms 
+        gosub straight
+        wait 3 ms 
+
+    //wall hugging
+      else if DigitalWallLeft <= 9 Then
+        gosub SlightRight
+
+      else if DigitalWallLeft >= 12 Then //was 12
+        gosub SlightLeft
+
+      else 
+        gosub Straight
+      end If
+
+  else 
+    gosub RightTurn90
+      rightTurns += 1
+  end if 
+end sub
+
+
+Sub Extinguish
+  gosub Stop
+  FAN = 1
+  wait 7000 ms 
+  //repeat this fire extinguish loop once
+  monkey = 0
+  do until monkey = 1
+    //turn right for a bit
+    MotorL = true
+    MotorL2 = false
+    MotorR = false
+    MotorR2 = true
+    wait 100 ms
+    //wait for 3 seconds
+    gosub stop 
+    wait 3000 ms
+        
+    //turn right for a bit
+    MotorL = true
+    MotorL2 = false
+    MotorR = false
+    MotorR2 = true
+    wait 100 ms
+    //wait for 3 seconds
+    gosub stop 
+    wait 3000 ms
+
+  //turn left to go back to middle
+    MotorL = false
+    MotorL2 = true
+    MotorR = true
+    MotorR2 = false
+    wait 200 ms
+
+    //wait for 3 seconds
+    gosub stop 
+    wait 3000 ms
+
+      //turn left to go back to middle
+    MotorL = false
+    MotorL2 = true
+    MotorR = true
+    MotorR2 = false
+    wait 200 ms
+
+    //wait for 3 seconds
+    gosub stop 
+    wait 3000 ms
+
+    //turn right go back to the middle
+    MotorL = true
+    MotorL2 = false
+    MotorR = false
+    MotorR2 = true
+    wait 200 ms
+    gosub straight
+    wait 100 ms 
+    
+    monkey = monkey +1
+  Loop 
+end Sub
+
+Sub Straight
+  MotorL = true
+  MotorR = true   //why
+end sub
+
+Sub Stop
+  MotorL = false
+  MotorL2 = false
+  MotorR = false
+  MotorR2 = false
+end sub
+
+
+Sub TurnLeft
+  MotorL = false
+  MotorL2 = true
+  MotorR = true
+  MotorR2 = false
+
+end sub
+
+Sub TurnRight
+  MotorL = true
+  MotorL2 = false
+  MotorR = false
+  MotorR2 = true
+
+end sub
+
+// Turn right very slowly
+Sub SlightRight
+  MotorL = true
+  MotorR = false
+  MotorL2 = false
+  MotorR2 = false
+end sub
+
+// Turn left very slowly
+Sub SlightLeft
+  MotorL = false
+  MotorR = true
+  MotorL2 = false
+  MotorR2 = false
+end sub
+
+Sub LeftTurn90
+
+  MotorL = false
+  MotorR = false
+  MotorL2 = false
+  MotorR2 = false
+  wait 300 ms
+  MotorL = false
+  MotorL2 = true
+  MotorR = true
+  MotorR2 = false
+  wait 400 ms
+  MotorL = false
+  MotorR = false
+  MotorL2 = false
+  MotorR2 = false
+  wait 300 ms
+end sub
+
+Sub RightTurn90
+  MotorL = false
+  MotorR = false
+  wait 300 ms
+  MotorL = true
+  MotorL2 = false
+  MotorR = false
+  MotorR2 = true
+  wait 335 ms  //was 435
+  MotorL = false
+  MotorR = false
+  MotorL2 = false
+  MotorR2 = false
+  wait 300 ms
+end sub
